@@ -31,5 +31,6 @@ jobs:
         run: pytest --cov=forecasting --cov-report=term-missing
       - name: Portfolio forecasting run (selection + backtests)
         run: |
+          mkdir -p artifacts
           python scripts/run_forecast.py --out artifacts | tee artifacts/forecast.log
           python scripts/verify_forecast.py
