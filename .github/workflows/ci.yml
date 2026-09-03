@@ -32,12 +32,4 @@ jobs:
       - name: Portfolio forecasting run (selection + backtests)
         run: |
           python scripts/run_forecast.py --out artifacts | tee artifacts/forecast.log
-          python -c "
-          import json
-          from pathlib import Path
-          summary = json.loads(Path('artifacts/portfolio_summary.json').read_text())
-          assert len(summary['per_sku']) > 0, 'no SKUs selected'
-          assert all(s['selected_model'] for s in summary['per_sku'].values())
-          assert summary['overall']['smape'] > 0, 'invalid overall sMAPE'
-          print('portfolio forecast check passed for', len(summary['per_sku']), 'SKUs')
-          "
+          python scripts/verify_forecast.py
