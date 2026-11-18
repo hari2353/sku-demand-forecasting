@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from forecasting.backtest import BacktestConfig, select_model
@@ -106,6 +107,9 @@ def pattern_mix(plans: tuple[SkuPlan, ...]) -> dict[str, int]:
 
 def plan_to_dict(plan: SkuPlan) -> dict:
     """JSON serialization for the CLI summary (dashboard contract)."""
+    def finite(value: float) -> float | None:
+        return round(value, 4) if math.isfinite(value) else None
+
     return {
         "sku_id": plan.sku.sku_id,
         "description": plan.sku.description,
@@ -114,15 +118,27 @@ def plan_to_dict(plan: SkuPlan) -> dict:
         "smape": round(plan.scorecard.smape, 4),
         "rmse": round(plan.scorecard.rmse, 2),
         "bias": round(plan.scorecard.bias, 2),
+        "mase": finite(plan.scorecard.mase),
+        "rmsse": finite(plan.scorecard.rmsse),
+        "benchmark_mase": finite(plan.benchmark_mase) if plan.benchmark_mase is not None else None,
+        "beats_benchmark": plan.beats_benchmark,
         "n_windows": plan.scorecard.n_windows,
         "forecast_next_horizon": [round(v, 1) for v in plan.forecast.values],
         "forecast_total": round(plan.forecast.total, 1),
+        "interval_80": [[round(lo, 1), round(hi, 1)] for lo, hi in plan.interval_80],
+        "interval_95": [[round(lo, 1), round(hi, 1)] for lo, hi in plan.interval_95],
+        "forecast_total_95": [
+            round(sum(lo for lo, _ in plan.interval_95), 1),
+            round(sum(hi for _, hi in plan.interval_95), 1),
+        ],
         "candidates": [
             {
                 "forecaster": c.forecaster,
                 "smape": round(c.smape, 4),
                 "rmse": round(c.rmse, 2),
                 "bias": round(c.bias, 2),
+                "mase": finite(c.mase),
+                "rmsse": finite(c.rmsse),
             }
             for c in plan.candidates
         ],

@@ -52,24 +52,36 @@ def main() -> None:
         print()
 
     print(f"{'SKU':<14} {'pattern':<13} {'selected model':<14} "
-          f"{'sMAPE':>7} {'RMSE':>8} {'bias':>7} {'next-Q total':>12}")
-    print("-" * 72)
+          f"{'sMAPE':>7} {'MASE':>6} {'RMSE':>8} {'bias':>7} {'next-Q total':>12}")
+    print("-" * 80)
     for plan in sorted(result.plans, key=lambda p: p.scorecard.smape):
         print(
             f"{plan.sku.sku_id:<14} {plan.sku.pattern.value:<13} "
             f"{plan.selected_model:<14} {plan.scorecard.smape:>7.3f} "
+            f"{plan.scorecard.mase:>6.2f} "
             f"{plan.scorecard.rmse:>8.1f} {plan.scorecard.bias:>7.2f} "
             f"{plan.forecast.total:>12.1f}"
         )
 
     s = result.summary
-    print("-" * 72)
+    print("-" * 80)
     print(f"models selected  : {s.models_selected}")
     print(f"pattern mix      : {pattern_mix(result.plans)}")
     print(f"mean sMAPE       : {s.mean_smape:.3f}")
     print(f"best SKU         : {s.best_sku} ({s.best_smape:.3f})")
     print(f"worst SKU        : {s.worst_sku} ({s.worst_smape:.3f})")
-    print(f"portfolio next-Q : {s.total_forecast_next_horizon:.0f} units")
+    low_95 = sum(lo for plan in result.plans for lo, _ in plan.interval_95)
+    high_95 = sum(hi for plan in result.plans for _, hi in plan.interval_95)
+    print(f"portfolio next-Q : {s.total_forecast_next_horizon:.0f} units "
+          f"(95% range {low_95:.0f}-{high_95:.0f})")
+    exceptions = [p for p in result.plans if not p.beats_benchmark]
+    if exceptions:
+        print(f"benchmark exceptions: {len(exceptions)} SKU(s) worse than seasonal naive on MASE")
+        for plan in exceptions:
+            print(f"  {plan.sku.sku_id}: {plan.selected_model} MASE "
+                  f"{plan.scorecard.mase:.2f} vs naive {plan.benchmark_mase:.2f}")
+    else:
+        print("benchmark exceptions: none (every winner beats seasonal naive on MASE)")
 
     args.out.mkdir(parents=True, exist_ok=True)
     summary = {
@@ -81,6 +93,8 @@ def main() -> None:
             "best_sku": s.best_sku,
             "worst_sku": s.worst_sku,
             "total_forecast_next_horizon": round(s.total_forecast_next_horizon, 1),
+            "total_forecast_95_range": [round(low_95, 1), round(high_95, 1)],
+            "benchmark_exceptions": [p.sku.sku_id for p in exceptions],
         },
         "per_sku": {plan.sku.sku_id: plan_to_dict(plan) for plan in result.plans},
     }

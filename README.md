@@ -7,28 +7,44 @@ The demo portfolio covers all four demand archetypes a real planner faces, and t
 ```
 $ python scripts/run_forecast.py --out artifacts
 
-SKU            pattern       selected model   sMAPE     RMSE    bias next-Q total
-------------------------------------------------------------------------
-SKU-0420009    trend         AutoETS          0.040      6.4   -2.79       2157.6
-SKU-0420001    trend         AutoETS          0.045      5.4   -2.47       1680.2
-SKU-0420005    trend         AutoETS          0.054      9.0   -4.82       2248.2
-SKU-0420000    smooth        SeasonalNaive(m=52)   0.060      6.9    2.29       1436.5
-SKU-0420008    smooth        SeasonalNaive(m=52)   0.061     10.4    0.87       2053.0
-SKU-0420004    smooth        SeasonalNaive(m=52)   0.062      9.6    0.96       1993.1
-SKU-0420010    intermittent  Croston          1.375      2.6    1.43         24.6
-SKU-0420006    intermittent  Croston          1.386      2.5    1.28         38.9
-SKU-0420002    intermittent  Croston          1.547      2.9    1.58         26.0
-SKU-0420003    lumpy         Croston          1.618     10.8   -0.02        138.7
-SKU-0420007    lumpy         Croston          1.670      5.6    3.20        147.1
-SKU-0420011    lumpy         Croston          1.717     16.3    1.22         87.4
-------------------------------------------------------------------------
-models selected : SeasonalNaive 3 | AutoETS 3 | Croston 6
-portfolio next-quarter total: 12,031 units
+========================================================================
+SKU DEMAND FORECASTING - automated model selection (seed=42)
+========================================================================
+portfolio: 12 SKUs, 156 weekly buckets each
+
+SKU            pattern       selected model   sMAPE   MASE     RMSE    bias next-Q total
+--------------------------------------------------------------------------------
+SKU-0420009    trend         AutoETS          0.040   1.12      6.4   -2.79       2157.6
+SKU-0420001    trend         AutoETS          0.045   1.28      5.4   -2.47       1680.2
+SKU-0420005    trend         AutoETS          0.054   1.74      9.0   -4.82       2248.2
+SKU-0420000    smooth        SeasonalNaive(m=52)   0.060   0.94      6.9    2.29       1436.5
+SKU-0420008    smooth        SeasonalNaive(m=52)   0.061   0.98     10.4    0.87       2053.0
+SKU-0420004    smooth        SeasonalNaive(m=52)   0.062   0.90      9.6    0.96       1993.1
+SKU-0420010    intermittent  Croston          1.375   1.26      2.6    1.43         24.6
+SKU-0420006    intermittent  Croston          1.386   1.06      2.5    1.28         38.9
+SKU-0420002    intermittent  Croston          1.547   1.21      2.9    1.58         26.0
+SKU-0420003    lumpy         Croston          1.618   1.32     10.8   -0.02        138.7
+SKU-0420007    lumpy         Croston          1.670   0.43      5.6    3.20        147.1
+SKU-0420011    lumpy         Croston          1.717   0.90     16.3    1.22         87.4
+--------------------------------------------------------------------------------
+models selected  : {'SeasonalNaive(m=52)': 3, 'AutoETS': 3, 'Croston': 6}
+pattern mix      : {'smooth': 3, 'trend': 3, 'intermittent': 3, 'lumpy': 3}
+mean sMAPE       : 0.803
+best SKU         : SKU-0420009 (0.040)
+worst SKU        : SKU-0420011 (1.717)
+portfolio next-Q : 12031 units (95% range 10223-14431)
+benchmark exceptions: 4 SKU(s) worse than seasonal naive on MASE
+  SKU-0420002: Croston MASE 1.21 vs naive 0.94
+  SKU-0420003: Croston MASE 1.32 vs naive 1.20
+  SKU-0420006: Croston MASE 1.06 vs naive 1.04
+  SKU-0420010: Croston MASE 1.26 vs naive 1.24
+
+summary written to artifacts/portfolio_summary.json
 ```
 
-Read the table: smooth SKUs won by seasonal naive (hard to beat on stable seasonal demand), trend SKUs needed **AutoETS** to track growth, and every intermittent/lumpy SKU went to **Croston** — exactly the methods-intuition split a demand-planning interviewer wants to see. (High sMAPE on intermittent SKUs is the honest reality of sparse demand; RMSE stays small because the volumes are small.)
+Read the table: smooth SKUs won by seasonal naive (hard to beat on stable seasonal demand), trend SKUs needed **AutoETS** to track growth, and every intermittent/lumpy SKU went to **Croston** — exactly the methods-intuition split a demand-planning interviewer wants to see. High sMAPE on intermittent SKUs is the honest reality of sparse demand (MASE puts those errors on the same scale as trend SKUs), and the benchmark-exception lines show the four SKUs where Croston still trails seasonal naive on MASE — the kind of exception a planner escalates rather than hides.
 
-**Verified quality bar:** 53 tests (unit + forecaster-contract + portfolio integration), 91% coverage, ruff + mypy clean, CI on Python 3.10-3.12 with a full portfolio run.
+**Verified quality bar:** 69 tests (unit + forecaster-contract + portfolio integration), ruff + mypy clean, CI on Python 3.10-3.12 with a full portfolio run.
 
 ## Models included
 
@@ -45,7 +61,8 @@ Candidate pools are **pattern-aware by default**: intermittent/lumpy SKUs compet
 ## Evaluation you can trust
 
 - **Rolling-origin backtests** — strictly causal: every fit sees only data before the window it scores; 4 origins x 13-week horizon by default
-- **sMAPE** (zero-robust, the right headline metric for sparse demand), **RMSE**, and **signed bias** (positive = over-forecasting — the number planners actually argue about)
+- **sMAPE** (zero-robust, the right headline metric for sparse demand), **MASE/RMSSE** (scale-free, comparable across SKUs), **RMSE**, and **signed bias** (positive = over-forecasting — the number planners actually argue about)
+- **95% prediction intervals** from pooled rolling-origin residuals, plus a naive-benchmark exception list when the selected model fails to beat seasonal naive on MASE
 - **Graceful degradation** — one bad SKU is recorded and skipped, never kills the portfolio run
 - **Deterministic everywhere** — same seed, same portfolio, same selections, on every machine and every CI run
 

@@ -8,10 +8,16 @@ tiebreak) - exactly the automated-selection framework of my Altria tool.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
-from forecasting.forecasters import Forecaster, candidate_pool_for, safe_forecast
-from forecasting.metrics import bias, rmse, smape
+from forecasting.forecasters import (
+    Forecaster,
+    SeasonalNaive,
+    candidate_pool_for,
+    safe_forecast,
+)
+from forecasting.metrics import bias, empirical_halfwidths, rmse, smape
 from forecasting.models import (
     BacktestWindow,
     ForecastResult,
@@ -89,15 +95,31 @@ def score_forecaster(
     windows = backtest(forecaster, sku, config)
     all_actuals: tuple[float, ...] = ()
     all_forecasts: tuple[float, ...] = ()
+    naive_abs = 0.0
+    naive_sq = 0.0
+    naive_points = 0
     for w in windows:
         all_actuals = all_actuals + w.actuals
         all_forecasts = all_forecasts + w.forecasts
+        train = sku.history[: w.train_end]
+        naive_abs += sum(abs(train[i] - train[i - 1]) for i in range(1, len(train)))
+        naive_sq += sum((train[i] - train[i - 1]) ** 2 for i in range(1, len(train)))
+        naive_points += len(train) - 1
+    abs_err = sum(abs(f - a) for a, f in zip(all_actuals, all_forecasts, strict=True))
+    sq_err = sum((f - a) ** 2 for a, f in zip(all_actuals, all_forecasts, strict=True))
+    mean_abs_err = abs_err / len(all_actuals)
+    mean_sq_err = sq_err / len(all_actuals)
+    mean_naive_abs = naive_abs / naive_points if naive_points else 0.0
+    mean_naive_sq = naive_sq / naive_points if naive_points else 0.0
     return Scorecard(
         forecaster=forecaster.name,
         smape=smape(all_actuals, all_forecasts),
         rmse=rmse(all_actuals, all_forecasts),
         bias=bias(all_actuals, all_forecasts),
         n_windows=len(windows),
+        # mean error / mean in-sample naive error (standard MASE/RMSSE scaling)
+        mase=math.inf if mean_naive_abs == 0 else mean_abs_err / mean_naive_abs,
+        rmsse=math.inf if mean_naive_sq == 0 else math.sqrt(mean_sq_err / mean_naive_sq),
     )
 
 
@@ -126,10 +148,28 @@ def select_model(
     final_forecast: ForecastResult = safe_forecast(
         winner, sku.history, config.horizon
     )
+    # Benchmark exception: score seasonal naive regardless of the SKU's pool.
+    try:
+        benchmark = score_forecaster(SeasonalNaive(), sku, config)
+    except ValueError:
+        benchmark = None
+    windows = backtest(winner, sku, config)
+    bands = empirical_halfwidths(windows, config.horizon)
+    point = final_forecast.values
     return SkuPlan(
         sku=sku,
         selected_model=best.forecaster,
         forecast=final_forecast,
         scorecard=best,
         candidates=tuple(sorted(cards, key=lambda c: c.smape)),
+        benchmark_mase=benchmark.mase if benchmark is not None else None,
+        beats_benchmark=bool(benchmark is None or best.mase <= benchmark.mase),
+        interval_80=tuple(
+            (max(0.0, v - hw), v + hw)
+            for v, hw in zip(point, bands[0.8], strict=True)
+        ),
+        interval_95=tuple(
+            (max(0.0, v - hw), v + hw)
+            for v, hw in zip(point, bands[0.95], strict=True)
+        ),
     )

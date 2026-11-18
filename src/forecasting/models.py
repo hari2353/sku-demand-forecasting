@@ -113,6 +113,8 @@ class Scorecard:
     rmse: float
     bias: float          # mean(forecast - actual); + = over-forecast
     n_windows: int
+    mase: float = 0.0    # MAE / in-sample naive MAE; scale-free across SKUs
+    rmsse: float = 0.0   # RMSE / in-sample naive RMSE
 
     def __post_init__(self) -> None:
         if self.n_windows < 1:
@@ -120,6 +122,9 @@ class Scorecard:
             raise ValueError(msg)
         if not 0.0 <= self.smape <= 2.0:
             msg = f"sMAPE out of [0, 2]: {self.smape}"
+            raise ValueError(msg)
+        if self.mase < 0.0 or self.rmsse < 0.0:
+            msg = "scaled errors must be non-negative"
             raise ValueError(msg)
 
 
@@ -132,3 +137,7 @@ class SkuPlan:
     forecast: ForecastResult
     scorecard: Scorecard
     candidates: tuple[Scorecard, ...] = field(default_factory=tuple)
+    benchmark_mase: float | None = None   # seasonal-naive MASE; None if unscorable
+    beats_benchmark: bool = True          # selected MASE <= benchmark MASE
+    interval_80: tuple[tuple[float, float], ...] = ()  # (lower, upper) per step
+    interval_95: tuple[tuple[float, float], ...] = ()
