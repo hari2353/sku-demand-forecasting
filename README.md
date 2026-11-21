@@ -82,6 +82,11 @@ python scripts/run_forecast.py          # the table above
 python scripts/run_forecast.py --skus 24 --seed 7   # bigger portfolio
 ```
 
+## Training footprint (Harvard Edge TinyML-Footprint cross-pollination)
+
+`forecasting.footprint` reports the operational energy and carbon of a model
+selection sweep, plus the per-run cost of CPU fitting. No new dependency.
+
 ## Repository layout
 
 ```
