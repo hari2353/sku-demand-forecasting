@@ -33,7 +33,9 @@ def conformal_half_width(residuals: list[float], *, alpha: float = 0.1) -> float
     return round(_quantile(magnitudes, 1 - alpha), 6)
 
 
-def prediction_interval(point_forecast: float, residuals: list[float], *, alpha: float = 0.1) -> tuple[float, float]:
+def prediction_interval(
+    point_forecast: float, residuals: list[float], *, alpha: float = 0.1
+) -> tuple[float, float]:
     hw = conformal_half_width(residuals, alpha=alpha)
     return (point_forecast - hw, point_forecast + hw)
 
@@ -43,5 +45,5 @@ def interval_coverage(actuals: list[float], lowers: list[float], uppers: list[fl
         raise ValueError("input lengths must match")
     if not actuals:
         raise ValueError("inputs must be non-empty")
-    hits = sum(1 for a, lo, hi in zip(actuals, lowers, uppers) if lo <= a <= hi)
+    hits = sum(1 for a, lo, hi in zip(actuals, lowers, uppers, strict=True) if lo <= a <= hi)
     return round(hits / len(actuals), 6)
