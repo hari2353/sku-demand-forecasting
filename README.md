@@ -87,7 +87,7 @@ python scripts/run_forecast.py --skus 24 --seed 7   # bigger portfolio
 `forecasting.footprint` reports the operational energy and carbon of a model
 selection sweep, plus the per-run cost of CPU fitting. No new dependency.
 
-## Repository layout
+## Prediction intervals (conformal, from quant/ML practice)\n\n`forecasting.intervals` gives conformal prediction intervals from residual\nmagnitudes plus empirical coverage, with no scipy dependency.\n\n## Repository layout
 
 ```
 src/forecasting/
