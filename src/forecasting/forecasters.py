@@ -64,9 +64,7 @@ class SeasonalNaive:
         last_season = h[-self.period :]
         reps = int(np.ceil(horizon / self.period))
         tiled = np.tile(last_season, reps)[:horizon]
-        return ForecastResult(
-            forecaster=self.name, horizon=horizon, values=tuple(tiled)
-        )
+        return ForecastResult(forecaster=self.name, horizon=horizon, values=tuple(tiled))
 
 
 @dataclass
@@ -98,9 +96,7 @@ class LinearTrend:
             raise ValueError(msg)
         future_t = np.arange(self._last_t + 1, self._last_t + 1 + horizon)
         values = np.maximum(0.0, self._intercept + self._slope * future_t)
-        return ForecastResult(
-            forecaster=self.name, horizon=horizon, values=tuple(values)
-        )
+        return ForecastResult(forecaster=self.name, horizon=horizon, values=tuple(values))
 
 
 # ---------------------------------------------------------------------------
@@ -179,9 +175,7 @@ class AutoETS:
             raise ValueError(msg)
         alpha, beta, phi = self._best
         values = _ets_forecast(self._y, horizon, alpha=alpha, beta=beta, phi=phi)
-        return ForecastResult(
-            forecaster=self.name, horizon=horizon, values=tuple(values)
-        )
+        return ForecastResult(forecaster=self.name, horizon=horizon, values=tuple(values))
 
 
 # ---------------------------------------------------------------------------
@@ -216,9 +210,7 @@ class Croston:
             raise ValueError(msg)
         per_period = max(0.0, self._z / self._p) if self._p > 0 else 0.0
         values = tuple(per_period for _ in range(horizon))
-        return ForecastResult(
-            forecaster=self.name, horizon=horizon, values=values
-        )
+        return ForecastResult(forecaster=self.name, horizon=horizon, values=values)
 
 
 @dataclass
@@ -247,17 +239,12 @@ class SBA:
         if horizon < 1:
             msg = "horizon must be >= 1"
             raise ValueError(msg)
-        per_period = max(0.0, (1.0 - self.alpha / 2.0) * self._z / self._p) \
-            if self._p > 0 else 0.0
+        per_period = max(0.0, (1.0 - self.alpha / 2.0) * self._z / self._p) if self._p > 0 else 0.0
         values = tuple(per_period for _ in range(horizon))
-        return ForecastResult(
-            forecaster=self.name, horizon=horizon, values=values
-        )
+        return ForecastResult(forecaster=self.name, horizon=horizon, values=values)
 
 
-def _croston_states(
-    history: tuple[float, ...], *, alpha: float
-) -> tuple[float, float]:
+def _croston_states(history: tuple[float, ...], *, alpha: float) -> tuple[float, float]:
     """Smoothed demand size (z) and interval (p) after Croston (1972)."""
     z = 0.0
     p = 0.0

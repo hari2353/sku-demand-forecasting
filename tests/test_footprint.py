@@ -20,8 +20,13 @@ def test_validation():
     for kwargs in (
         {"gpu_hours": -1, "cpu_hours": 0, "gpu_power_w": 10, "cpu_power_w": 0},
         {"gpu_hours": 1, "cpu_hours": 0, "gpu_power_w": 10, "cpu_power_w": 0, "pue": 0.9},
-        {"gpu_hours": 1, "cpu_hours": 0, "gpu_power_w": 10, "cpu_power_w": 0,
-         "carbon_intensity_g_per_kwh": -1},
+        {
+            "gpu_hours": 1,
+            "cpu_hours": 0,
+            "gpu_power_w": 10,
+            "cpu_power_w": 0,
+            "carbon_intensity_g_per_kwh": -1,
+        },
     ):
         try:
             training_carbon(**kwargs)

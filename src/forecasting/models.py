@@ -13,11 +13,11 @@ from enum import Enum
 class DemandPattern(str, Enum):
     """Categorization used by demand-planning teams (Syntetos/Boylan)."""
 
-    SMOOTH = "smooth"          # regular demand, low variance
-    TREND = "trend"            # smooth + strong linear growth/decline
+    SMOOTH = "smooth"  # regular demand, low variance
+    TREND = "trend"  # smooth + strong linear growth/decline
     INTERMITTENT = "intermittent"  # many zero periods, small non-zero demands
-    LUMPY = "lumpy"            # many zeros + large unpredictable spikes
-    ERRATIC = "erratic"         # non-zero but high variance
+    LUMPY = "lumpy"  # many zeros + large unpredictable spikes
+    ERRATIC = "erratic"  # non-zero but high variance
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,8 +89,8 @@ class ForecastResult:
 class BacktestWindow:
     """One rolling-origin evaluation window."""
 
-    train_end: int          # index where training data ends (exclusive)
-    horizon: int            # number of periods scored
+    train_end: int  # index where training data ends (exclusive)
+    horizon: int  # number of periods scored
     actuals: tuple[float, ...]
     forecasts: tuple[float, ...]
     forecaster: str
@@ -111,10 +111,10 @@ class Scorecard:
     forecaster: str
     smape: float
     rmse: float
-    bias: float          # mean(forecast - actual); + = over-forecast
+    bias: float  # mean(forecast - actual); + = over-forecast
     n_windows: int
-    mase: float = 0.0    # MAE / in-sample naive MAE; scale-free across SKUs
-    rmsse: float = 0.0   # RMSE / in-sample naive RMSE
+    mase: float = 0.0  # MAE / in-sample naive MAE; scale-free across SKUs
+    rmsse: float = 0.0  # RMSE / in-sample naive RMSE
 
     def __post_init__(self) -> None:
         if self.n_windows < 1:
@@ -137,7 +137,7 @@ class SkuPlan:
     forecast: ForecastResult
     scorecard: Scorecard
     candidates: tuple[Scorecard, ...] = field(default_factory=tuple)
-    benchmark_mase: float | None = None   # seasonal-naive MASE; None if unscorable
-    beats_benchmark: bool = True          # selected MASE <= benchmark MASE
+    benchmark_mase: float | None = None  # seasonal-naive MASE; None if unscorable
+    beats_benchmark: bool = True  # selected MASE <= benchmark MASE
     interval_80: tuple[tuple[float, float], ...] = ()  # (lower, upper) per step
     interval_95: tuple[tuple[float, float], ...] = ()

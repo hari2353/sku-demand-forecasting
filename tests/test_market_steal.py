@@ -21,14 +21,14 @@ from forecasting.synthetic import make_portfolio
 
 # ── scale-free metrics ──────────────────────────────────────────────────────
 class TestScaleFreeMetrics:
-    INSAMPLE = (10.0, 12.0, 11.0, 14.0, 13.0)          # naive MAE = 7/4 = 1.75
+    INSAMPLE = (10.0, 12.0, 11.0, 14.0, 13.0)  # naive MAE = 7/4 = 1.75
     ACTUAL = (15.0, 16.0, 17.0)
 
     def test_mase_perfect_forecast_is_zero(self) -> None:
         assert mase(self.ACTUAL, self.ACTUAL, self.INSAMPLE) == 0.0
 
     def test_mase_is_mae_over_insample_naive_mae(self) -> None:
-        forecast = (16.0, 14.0, 19.0)                    # MAE = (1+2+2)/3 = 5/3
+        forecast = (16.0, 14.0, 19.0)  # MAE = (1+2+2)/3 = 5/3
         assert mase(self.ACTUAL, forecast, self.INSAMPLE) == pytest.approx((5 / 3) / 1.75)
 
     def test_mase_scales_with_error(self) -> None:
@@ -68,8 +68,9 @@ class TestEmpiricalIntervals:
         assert all(w >= 0.0 for w in widths)
 
     def test_95_is_never_narrower_than_80(self, smooth_sku) -> None:
-        for w80, w95 in zip(self._widths(smooth_sku, 0.8),
-                            self._widths(smooth_sku, 0.95), strict=True):
+        for w80, w95 in zip(
+            self._widths(smooth_sku, 0.8), self._widths(smooth_sku, 0.95), strict=True
+        ):
             assert w95 >= w80 - 1e-9
 
     def test_bands_widen_with_horizon(self, smooth_sku) -> None:
@@ -126,8 +127,15 @@ class TestBenchmarkException:
         planner = PortfolioPlanner(BacktestConfig(horizon=13, n_origins=2))
         result = planner.plan(make_portfolio(n_skus=2, seed=5))
         d = plan_to_dict(result.plans[0])
-        for key in ("mase", "rmsse", "benchmark_mase", "beats_benchmark",
-                    "interval_80", "interval_95", "forecast_total_95"):
+        for key in (
+            "mase",
+            "rmsse",
+            "benchmark_mase",
+            "beats_benchmark",
+            "interval_80",
+            "interval_95",
+            "forecast_total_95",
+        ):
             assert key in d
         assert len(d["interval_95"]) == len(d["forecast_next_horizon"])
         assert d["forecast_total_95"][0] <= d["forecast_total_95"][1]

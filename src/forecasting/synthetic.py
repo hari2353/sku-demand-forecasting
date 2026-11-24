@@ -101,9 +101,7 @@ def make_sku(index: int, *, seed: int = 42, n_periods: int = 156) -> SkuSeries:
     )
 
 
-def make_portfolio(
-    n_skus: int = 12, *, seed: int = 42, n_periods: int = 156
-) -> list[SkuSeries]:
+def make_portfolio(n_skus: int = 12, *, seed: int = 42, n_periods: int = 156) -> list[SkuSeries]:
     """A deterministic, balanced portfolio across all four patterns."""
     if n_skus < 1:
         msg = "n_skus must be >= 1"

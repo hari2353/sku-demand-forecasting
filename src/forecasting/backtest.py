@@ -31,9 +31,9 @@ from forecasting.models import (
 class BacktestConfig:
     """How rolling-origin evaluation is run."""
 
-    horizon: int = 13          # one quarter of weekly buckets
-    n_origins: int = 4        # how many rolling origins to score
-    min_train: int = 52       # minimum training length before first origin
+    horizon: int = 13  # one quarter of weekly buckets
+    n_origins: int = 4  # how many rolling origins to score
+    min_train: int = 52  # minimum training length before first origin
 
     def __post_init__(self) -> None:
         if self.horizon < 1:
@@ -145,9 +145,7 @@ def select_model(
     best = ranked[0]
     winner = next(f for f in candidates if f.name == best.forecaster)
 
-    final_forecast: ForecastResult = safe_forecast(
-        winner, sku.history, config.horizon
-    )
+    final_forecast: ForecastResult = safe_forecast(winner, sku.history, config.horizon)
     # Benchmark exception: score seasonal naive regardless of the SKU's pool.
     try:
         benchmark = score_forecaster(SeasonalNaive(), sku, config)
@@ -165,11 +163,9 @@ def select_model(
         benchmark_mase=benchmark.mase if benchmark is not None else None,
         beats_benchmark=bool(benchmark is None or best.mase <= benchmark.mase),
         interval_80=tuple(
-            (max(0.0, v - hw), v + hw)
-            for v, hw in zip(point, bands[0.8], strict=True)
+            (max(0.0, v - hw), v + hw) for v, hw in zip(point, bands[0.8], strict=True)
         ),
         interval_95=tuple(
-            (max(0.0, v - hw), v + hw)
-            for v, hw in zip(point, bands[0.95], strict=True)
+            (max(0.0, v - hw), v + hw) for v, hw in zip(point, bands[0.95], strict=True)
         ),
     )

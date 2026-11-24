@@ -107,6 +107,7 @@ def pattern_mix(plans: tuple[SkuPlan, ...]) -> dict[str, int]:
 
 def plan_to_dict(plan: SkuPlan) -> dict:
     """JSON serialization for the CLI summary (dashboard contract)."""
+
     def finite(value: float) -> float | None:
         return round(value, 4) if math.isfinite(value) else None
 

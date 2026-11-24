@@ -117,8 +117,14 @@ class TestPortfolioIntegration:
         planner = PortfolioPlanner(BacktestConfig(horizon=13, n_origins=2))
         result = planner.plan(portfolio)
         d = plan_to_dict(result.plans[0])
-        for key in ("sku_id", "pattern", "selected_model", "smape",
-                    "forecast_next_horizon", "candidates"):
+        for key in (
+            "sku_id",
+            "pattern",
+            "selected_model",
+            "smape",
+            "forecast_next_horizon",
+            "candidates",
+        ):
             assert key in d
 
     def test_one_bad_sku_never_kills_the_run(self, portfolio) -> None:

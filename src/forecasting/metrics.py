@@ -32,9 +32,7 @@ def rmse(actual: tuple[float, ...], forecast: tuple[float, ...]) -> float:
     if not actual:
         msg = "no observations"
         raise ValueError(msg)
-    return math.sqrt(
-        sum((f - a) ** 2 for a, f in zip(actual, forecast, strict=True)) / len(actual)
-    )
+    return math.sqrt(sum((f - a) ** 2 for a, f in zip(actual, forecast, strict=True)) / len(actual))
 
 
 def bias(actual: tuple[float, ...], forecast: tuple[float, ...]) -> float:
@@ -57,8 +55,9 @@ def score_window(window: BacktestWindow) -> tuple[float, float, float]:
     )
 
 
-def _validate_scaled(actual: tuple[float, ...], forecast: tuple[float, ...],
-                     insample: tuple[float, ...]) -> None:
+def _validate_scaled(
+    actual: tuple[float, ...], forecast: tuple[float, ...], insample: tuple[float, ...]
+) -> None:
     if len(actual) != len(forecast):
         msg = "actual/forecast length mismatch"
         raise ValueError(msg)
@@ -78,8 +77,9 @@ def _naive_sq(insample: tuple[float, ...]) -> float:
     return sum((insample[i] - insample[i - 1]) ** 2 for i in range(1, len(insample)))
 
 
-def mase(actual: tuple[float, ...], forecast: tuple[float, ...],
-         insample: tuple[float, ...]) -> float:
+def mase(
+    actual: tuple[float, ...], forecast: tuple[float, ...], insample: tuple[float, ...]
+) -> float:
     """Mean absolute scaled error: MAE / in-sample naive MAE (m=1).
 
     Scale-free across SKUs, so a lumpy SKU's error reads next to a smooth
@@ -95,8 +95,9 @@ def mase(actual: tuple[float, ...], forecast: tuple[float, ...],
     return mean_abs_err / mean_naive
 
 
-def rmsse(actual: tuple[float, ...], forecast: tuple[float, ...],
-          insample: tuple[float, ...]) -> float:
+def rmsse(
+    actual: tuple[float, ...], forecast: tuple[float, ...], insample: tuple[float, ...]
+) -> float:
     """Root mean squared scaled error: RMSE / in-sample naive RMSE (m=1)."""
     _validate_scaled(actual, forecast, insample)
     denom = _naive_sq(insample)
@@ -117,9 +118,9 @@ def _quantile(sorted_values: list[float], q: float) -> float:
     return sorted_values[lo] + (sorted_values[hi] - sorted_values[lo]) * (pos - lo)
 
 
-def empirical_halfwidths(windows: tuple[BacktestWindow, ...], horizon: int,
-                         levels: tuple[float, ...] = (0.8, 0.95)
-                         ) -> dict[float, tuple[float, ...]]:
+def empirical_halfwidths(
+    windows: tuple[BacktestWindow, ...], horizon: int, levels: tuple[float, ...] = (0.8, 0.95)
+) -> dict[float, tuple[float, ...]]:
     """Empirical interval half-widths per horizon step.
 
     Pools rolling-origin absolute errors normalized by `sqrt(step)` (so
@@ -145,8 +146,7 @@ def empirical_halfwidths(windows: tuple[BacktestWindow, ...], horizon: int,
     )
     return {
         level: tuple(
-            float(_quantile(normalized, level) * math.sqrt(step))
-            for step in range(1, horizon + 1)
+            float(_quantile(normalized, level) * math.sqrt(step)) for step in range(1, horizon + 1)
         )
         for level in levels
     }

@@ -13,9 +13,7 @@ def smooth_sku() -> SkuSeries:
         sku_id="SKU-T01",
         description="test smooth",
         pattern=DemandPattern.SMOOTH,
-        history=tuple(
-            100.0 + 20.0 * ((t % 52) / 52.0) for t in range(156)
-        ),
+        history=tuple(100.0 + 20.0 * ((t % 52) / 52.0) for t in range(156)),
     )
 
 

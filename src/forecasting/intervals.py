@@ -4,6 +4,7 @@ Conformal-style intervals from residual magnitudes: the half-width is the
 (1-alpha) quantile of absolute residuals, giving marginal coverage without
 distributional assumptions. Pure Python, no scipy.
 """
+
 from __future__ import annotations
 
 import math
